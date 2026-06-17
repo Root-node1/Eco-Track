@@ -1,14 +1,14 @@
-# 🌍 EcoTrack Documentation (Practice Project)
+#  EcoTrack Documentation (Practice Project)
 
-## 📌 Overview
+##  Overview
 
 EcoTrack is a **community carbon footprint tracker** that allows users to log daily activities (transport, electricity, food) and compare their carbon impact against a community average.
 
-> ⚠️ This project is for **Monday PRACTICE session** — not the final hackathon build.
+>  This project is for **A weekly PRACTICE session** — not the final hackathon build.
 
 ---
 
-# 🧱 Architecture
+#  Architecture
 
 ```id="arch1"
                   ┌──────────────────────┐
@@ -33,7 +33,7 @@ EcoTrack is a **community carbon footprint tracker** that allows users to log da
 
 ---
 
-# ⚠️ Critical Rule
+# Critical Rule
 
 Both backends **MUST return IDENTICAL JSON shapes** for all endpoints.
 
@@ -45,7 +45,7 @@ This ensures:
 
 ---
 
-# 🌐 Base URLs
+#  Base URLs
 
 | Backend    | URL                                      |
 | ---------- | ---------------------------------------- |
@@ -55,7 +55,7 @@ This ensures:
 
 ---
 
-# 🔄 Data Flow
+#  Data Flow
 
 * User logs activity via frontend
 * Frontend calls **either backend (A or B)**
@@ -71,7 +71,7 @@ This ensures:
 
 ---
 
-# 📦 API Endpoints (IDENTICAL for BOTH Backends)
+#  API Endpoints (IDENTICAL for BOTH Backends)
 
 ---
 
@@ -185,7 +185,7 @@ Fetch weather data + carbon context
 
 ---
 
-# 🗂️ Monorepo Structure
+#  Monorepo Structure
 
 ```id="mono1"
 ecotrack/
@@ -232,7 +232,7 @@ CARBON_FACTOR_FOOD=0.5
 
 ---
 
-# 🔐 CORS Configuration
+#  CORS Configuration
 
 ## Node (Express)
 
@@ -259,7 +259,7 @@ CORS_ALLOWED_ORIGINS = [
 
 ---
 
-# 📬 Postman Collection
+#  Postman Collection
 
 ```json id="postman1"
 {
@@ -299,7 +299,7 @@ CORS_ALLOWED_ORIGINS = [
 
 ---
 
-# 🧪 Testing Strategy
+#  Testing Strategy
 
 * Backend A vs Backend B responses must match exactly
 * Use:
@@ -310,7 +310,7 @@ CORS_ALLOWED_ORIGINS = [
 
 ---
 
-# 🔀 Git Workflow
+#  Git Workflow
 
 * `main` → production-ready
 * Feature branches per developer
@@ -320,7 +320,7 @@ CORS_ALLOWED_ORIGINS = [
 
 ---
 
-# 📝 Changelog
+#  Changelog
 
 | Version | Date       | Changes                |
 | ------- | ---------- | ---------------------- |
@@ -330,7 +330,7 @@ CORS_ALLOWED_ORIGINS = [
 
 ---
 
-# ✅ Sign-off
+#  Sign-off
 
 | Name     | Role               | Signature | Date   |
 | -------- | ------------------ | --------- | ------ |
@@ -342,7 +342,7 @@ CORS_ALLOWED_ORIGINS = [
 
 ---
 
-# 📌 Final Notes
+#  Final Notes
 
 * Both backends are **equal implementations**
 * Frontend should work with either backend without changes
@@ -351,4 +351,4 @@ CORS_ALLOWED_ORIGINS = [
 
 ---
 
-**End of Document**
+**End of Doc**

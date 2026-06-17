@@ -68,3 +68,5 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+server-eco-track-node/node_modules/
+server-eco-track-node/.env
