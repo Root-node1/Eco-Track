@@ -4,13 +4,13 @@
   "description": "Eco-Track: Sustainability tracking application",
   "private": true,
   "scripts": {
-    "install-all": "npm install && cd client-eco-track && npm install && cd ../server-eco-track && pip install -r requirements.txt",
+    "install-all": "npm install && cd client-eco-track && npm install && cd ../server-eco-track && python -m venv venv && venv\\Scripts\\python -m pip install -r requirements.txt",
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "cd client-eco-track && npm run dev",
-    "dev:server": "cd server-eco-track && python manage.py runserver",
+    "dev:server": "cd server-eco-track && venv\\Scripts\\python manage.py runserver",
     "build": "npm run build:client && npm run build:server",
     "build:client": "cd client-eco-track && npm run build",
-    "build:server": "cd server-eco-track && python manage.py collectstatic --noinput",
+    "build:server": "cd server-eco-track && venv\\Scripts\\python manage.py collectstatic --noinput",
     "lint": "npm run lint:client",
     "lint:client": "cd client-eco-track && npm run lint",
     "preview": "cd client-eco-track && npm run preview"
