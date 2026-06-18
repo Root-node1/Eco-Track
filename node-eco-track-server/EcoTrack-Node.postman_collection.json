@@ -5,76 +5,74 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": "1.0.0"
   },
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:5000/api",
-      "type": "string"
-    }
-  ],
   "item": [
     {
-      "name": "Log Activity",
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/health"
+      }
+    },
+    {
+      "name": "POST /api/log",
       "request": {
         "method": "POST",
+        "url": "{{base_url}}/api/log",
         "header": [
           {
             "key": "Content-Type",
             "value": "application/json"
           }
         ],
-        "url": {
-          "raw": "{{baseUrl}}/log",
-          "host": ["{{baseUrl}}"],
-          "path": ["log"]
-        },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"transportType\": \"car\",\n  \"distanceKm\": 10,\n  \"electricityKwh\": 5,\n  \"foodType\": \"meat\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
+          "raw": "{\n  \"transportType\": \"car\",\n  \"distanceKm\": 15.5,\n  \"electricityKwh\": 4.2,\n  \"foodType\": \"meat\"\n}"
+        }
+      }
+    },
+    {
+      "name": "GET /api/stats",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/stats"
+      }
+    },
+    {
+      "name": "GET /api/climate",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/climate?lat=-1.286389&lon=36.817223"
+      }
+    },
+    {
+      "name": "POST /api/chatbot/message",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/chatbot/message",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
           }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"What is carbon footprint?\",\n  \"userId\": \"user123\"\n}"
         }
-      },
-      "response": []
+      }
     },
     {
-      "name": "Get Stats",
+      "name": "GET /api/chatbot/history/:userId",
       "request": {
         "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/stats",
-          "host": ["{{baseUrl}}"],
-          "path": ["stats"]
-        }
-      },
-      "response": []
-    },
+        "url": "{{base_url}}/api/chatbot/history/user123"
+      }
+    }
+  ],
+  "variable": [
     {
-      "name": "Get Climate",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/climate?lat=-1.286389&lon=36.817223",
-          "host": ["{{baseUrl}}"],
-          "path": ["climate"],
-          "query": [
-            {
-              "key": "lat",
-              "value": "-1.286389"
-            },
-            {
-              "key": "lon",
-              "value": "36.817223"
-            }
-          ]
-        }
-      },
-      "response": []
+      "key": "base_url",
+      "value": "http://localhost:5000"
     }
   ]
 }
