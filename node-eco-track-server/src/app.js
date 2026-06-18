@@ -16,15 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api', require('./routes'));
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'EcoTrack server running',
-    timestamp: new Date().toISOString()
-  });
-});
+app.use('/api/auth', require('./routes/authRoutes'));
 
 // 404 handler
 app.use((req, res) => {
