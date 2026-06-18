@@ -185,6 +185,209 @@ Fetch weather data + carbon context
 
 ---
 
+## 4. POST /api/auth/register
+
+### Purpose
+
+Create a new user account and receive JWT tokens
+
+### Request
+
+```json id="req4"
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "securepass123"
+}
+```
+
+> `email` is optional; `password` must be at least 8 characters
+
+### Response (201)
+
+```json id="res4"
+{
+  "access": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "email": "john@example.com"
+  }
+}
+```
+
+---
+
+## 5. POST /api/auth/login
+
+### Purpose
+
+Authenticate and receive JWT tokens
+
+### Request
+
+```json id="req5"
+{
+  "username": "johndoe",
+  "password": "securepass123"
+}
+```
+
+### Response (200)
+
+```json id="res5"
+{
+  "access": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "email": "john@example.com"
+  }
+}
+```
+
+### Error (401)
+
+```json id="err5"
+{
+  "detail": "Invalid credentials"
+}
+```
+
+---
+
+## 6. POST /api/auth/refresh
+
+### Purpose
+
+Obtain a new access token using a valid refresh token
+
+### Request
+
+```json id="req6"
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+### Response (200)
+
+```json id="res6"
+{
+  "access": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+---
+
+## 7. POST /api/auth/logout
+
+### Purpose
+
+Blacklist a refresh token to prevent further use
+
+### Request
+
+```json id="req7"
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+### Response (200)
+
+```json id="res7"
+{
+  "detail": "Logged out successfully"
+}
+```
+
+> Requires authentication via `Authorization: Bearer <access_token>` header
+
+---
+
+## 8. /api/profile
+
+### Purpose
+
+Retrieve, update, or delete the authenticated user's profile
+
+### Auth
+
+All methods require `Authorization: Bearer <access_token>` header.
+
+---
+
+### 8a. GET /api/profile
+
+#### Response (200)
+
+```json id="res8a"
+{
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "email": "john@example.com"
+  },
+  "avatar": null,
+  "bio": "",
+  "location": "",
+  "created_at": "2026-06-18T10:00:00Z",
+  "updated_at": "2026-06-18T10:00:00Z"
+}
+```
+
+---
+
+### 8b. PUT /api/profile
+
+Full update of profile fields.
+
+#### Request
+
+```json id="req8b"
+{
+  "bio": "Eco-warrior from Nairobi",
+  "location": "Nairobi"
+}
+```
+
+#### Response (200)
+
+Same shape as GET /api/profile.
+
+---
+
+### 8c. PATCH /api/profile
+
+Partial update — only send the fields to change.
+
+#### Request
+
+```json id="req8c"
+{
+  "location": "Mombasa"
+}
+```
+
+#### Response (200)
+
+Same shape as GET /api/profile.
+
+---
+
+### 8d. DELETE /api/profile
+
+Permanently delete the user account and all associated data.
+
+#### Response (204)
+
+*No body*
+
+---
+
 #  Monorepo Structure
 
 ```id="mono1"
@@ -292,6 +495,75 @@ CORS_ALLOWED_ORIGINS = [
         "method": "GET",
         "url": "{{baseUrl}}/climate?lat=-1.286389&lon=36.817223"
       }
+    },
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"johndoe\", \"email\": \"john@example.com\", \"password\": \"securepass123\" }"
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"johndoe\", \"password\": \"securepass123\" }"
+        }
+      }
+    },
+    {
+      "name": "Refresh Token",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/refresh",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"refresh\": \"...\" }"
+        }
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/logout",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"refresh\": \"...\" }"
+        }
+      }
+    },
+    {
+      "name": "Get Profile",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/profile"
+      }
+    },
+    {
+      "name": "Update Profile",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/profile",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"bio\": \"Eco-warrior\", \"location\": \"Nairobi\" }"
+        }
+      }
+    },
+    {
+      "name": "Delete Profile",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/profile"
+      }
     }
   ]
 }
@@ -325,7 +597,7 @@ CORS_ALLOWED_ORIGINS = [
 | Version | Date       | Changes                |
 | ------- | ---------- | ---------------------- |
 | v0.1.0  | 2026-06-16 | Initial practice setup |
-| v0.2.0  | TBD        | Add auth               |
+| v0.2.0  | 2026-06-18 | Add auth + user profile |
 | v0.3.0  | TBD        | Add leaderboard        |
 
 ---

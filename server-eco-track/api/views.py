@@ -1,15 +1,24 @@
 from datetime import timedelta
 from decimal import Decimal
 
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.db.models import Avg
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 
 from .models import Activity
-from .serializers import LogActivitySerializer, ActivityResponseSerializer
+from .serializers import (
+    LogActivitySerializer,
+    ActivityResponseSerializer,
+    RegisterSerializer,
+    ProfileSerializer,
+)
 from .weather import get_climate_data
 
 
@@ -90,6 +99,103 @@ CLIMATE_RESPONSE_EXAMPLE = OpenApiExample(
 
 
 @extend_schema(
+    summary='Register a new user',
+    request=RegisterSerializer,
+    responses={201: OpenApiExample('Success', value={'access': '...', 'refresh': '...', 'user': {'id': 1, 'username': '...', 'email': '...'}})},
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register(request):
+    serializer = RegisterSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = serializer.save()
+    refresh = RefreshToken.for_user(user)
+    return Response({
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+        },
+    }, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(
+    summary='Login and get JWT tokens',
+    request=OpenApiExample('Login', value={'username': '...', 'password': '...'}),
+    responses={200: OpenApiExample('Success', value={'access': '...', 'refresh': '...', 'user': {'id': 1, 'username': '...', 'email': '...'}})},
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+    user = authenticate(username=username, password=password)
+    if user is None:
+        return Response(
+            {'detail': 'Invalid credentials'},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+    refresh = RefreshToken.for_user(user)
+    return Response({
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+        },
+    })
+
+
+@extend_schema(
+    summary='Logout and blacklist refresh token',
+    request=OpenApiExample('Logout', value={'refresh': '...'}),
+    responses={200: OpenApiExample('Success', value={'detail': 'Logged out successfully'})},
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout(request):
+    try:
+        refresh = request.data.get('refresh')
+        if refresh:
+            token = RefreshToken(refresh)
+            token.blacklist()
+        return Response({'detail': 'Logged out successfully'})
+    except Exception:
+        return Response(
+            {'detail': 'Invalid or expired refresh token'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+@extend_schema(
+    summary='Get current user profile',
+    responses={200: ProfileSerializer},
+)
+@api_view(['GET', 'PUT', 'PATCH', 'DELETE'])
+def profile(request):
+    profile = request.user.profile
+
+    if request.method == 'GET':
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
+
+    elif request.method in ('PUT', 'PATCH'):
+        partial = request.method == 'PATCH'
+        serializer = ProfileSerializer(profile, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    elif request.method == 'DELETE':
+        user = request.user
+        user.delete()
+        return Response({'detail': 'Account deleted permanently'}, status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(
     summary='Log daily activity',
     description='Log a daily activity and calculate carbon footprint. At least one field is required.',
     request=LogActivitySerializer,
@@ -97,8 +203,12 @@ CLIMATE_RESPONSE_EXAMPLE = OpenApiExample(
     responses={201: OpenApiExample('Success', value=LOG_RESPONSE_EXAMPLE.value)},
 )
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def log_activity(request):
-    serializer = LogActivitySerializer(data=request.data)
+    serializer = LogActivitySerializer(
+        data=request.data,
+        context={'user': request.user if request.user.is_authenticated else None},
+    )
     serializer.is_valid(raise_exception=True)
     activity = serializer.save()
     return Response(
@@ -113,6 +223,7 @@ def log_activity(request):
     responses={200: OpenApiExample('Success', value=STATS_RESPONSE_EXAMPLE.value)},
 )
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_stats(request):
     period_days = 7
     since = timezone.now() - timedelta(days=period_days)
@@ -178,6 +289,7 @@ def get_stats(request):
     responses={200: OpenApiExample('Success', value=CLIMATE_RESPONSE_EXAMPLE.value)},
 )
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def get_climate(request):
     lat = request.query_params.get('lat', '-1.286389')
     lon = request.query_params.get('lon', '36.817223')
