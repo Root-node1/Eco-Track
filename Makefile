@@ -21,7 +21,7 @@ help:
 install-all:
 	npm install
 	cd client-eco-track && npm install
-	cd ../server-eco-track && pip install -r requirements.txt
+	cd ../server-eco-track && python -m venv venv && venv/Scripts/python -m pip install -r requirements.txt
 
 dev:
 	npm run dev
