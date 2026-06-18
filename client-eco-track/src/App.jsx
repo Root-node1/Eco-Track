@@ -3,7 +3,7 @@ import EcoTrackApp from './EcoTrackApp';
 function App() {
   return (
     <div>
-      <EcoTrack />
+      <EcoTrackApp />
     </div>
   )
 }
