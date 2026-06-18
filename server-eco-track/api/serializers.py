@@ -1,5 +1,37 @@
 from rest_framework import serializers
-from .models import Activity
+from django.contrib.auth.models import User
+from .models import Activity, UserProfile
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'password']
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email', ''),
+            password=validated_data['password'],
+        )
+        return user
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'avatar', 'bio', 'location', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class LogActivitySerializer(serializers.Serializer):
@@ -35,11 +67,13 @@ class LogActivitySerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+        user = self.context.get('user') if self.context else None
         return Activity.objects.create(
             transport_type=validated_data.get('transportType'),
             distance_km=validated_data.get('distanceKm'),
             electricity_kwh=validated_data.get('electricityKwh'),
             food_type=validated_data.get('foodType'),
+            user=user,
         )
 
 
