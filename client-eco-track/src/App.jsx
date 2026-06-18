@@ -1,8 +1,10 @@
-import React from 'react'
+import EcoTrackApp from './EcoTrackApp';
 
 function App() {
   return (
-    <div>App</div>
+    <div>
+      <EcoTrack />
+    </div>
   )
 }
 
