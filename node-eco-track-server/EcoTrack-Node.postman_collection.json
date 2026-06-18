@@ -1,0 +1,80 @@
+{
+  "info": {
+    "name": "EcoTrack Node API",
+    "description": "Node + MongoDB backend for EcoTrack practice project",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Log Activity",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/log",
+          "host": ["{{baseUrl}}"],
+          "path": ["log"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transportType\": \"car\",\n  \"distanceKm\": 10,\n  \"electricityKwh\": 5,\n  \"foodType\": \"meat\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Stats",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/stats",
+          "host": ["{{baseUrl}}"],
+          "path": ["stats"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Climate",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/climate?lat=-1.286389&lon=36.817223",
+          "host": ["{{baseUrl}}"],
+          "path": ["climate"],
+          "query": [
+            {
+              "key": "lat",
+              "value": "-1.286389"
+            },
+            {
+              "key": "lon",
+              "value": "36.817223"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
