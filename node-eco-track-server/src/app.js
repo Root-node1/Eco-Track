@@ -14,9 +14,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
-app.use('/api', require('./routes'));
-app.use('/api/auth', require('./routes/authRoutes'));
+
 
 // 404 handler
 app.use((req, res) => {
