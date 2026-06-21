@@ -1,7 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useEcoTrackStore, api } from "./ecoTrackStore";
 
 /* ---------------------------------------------------------
    EcoTrack — community carbon footprint tracker
+
+   Data layer (auth, stats, log/feed, climate) now lives in
+   ./ecoTrackStore.js, owned by Lenny. This file only handles
+   form-local UI state and rendering. Visual styling below
+   (design tokens, gauge, bars) is unchanged from the original —
+   swap it freely once a final visual direction is locked,
+   without touching ecoTrackStore.js.
+
    Design tokens (see design plan):
    bg        #0E1410   panel    #1B2620
    accent    #5FCE8F   warn     #E8896B
@@ -23,94 +32,7 @@ function useFonts() {
   }, []);
 }
 
-/* ---------------- API layer — real fetch against Winstone's Node backend ----------------
-   Per doc.md: Node API, JWT auth, identical-shape responses.
-   Base URL falls back to localhost in dev; swap via window.__ECOTRACK_API_URL if needed. */
-
-const API_BASE =
-  (typeof window !== "undefined" && window.__ECOTRACK_API_URL) ||
-  "https://ecotrack-node.onrender.com/api";
-
-class ApiError extends Error {
-  constructor(message, status) {
-    super(message);
-    this.status = status;
-  }
-}
-
-async function apiRequest(path, { method = "GET", body, token, auth = true } = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (auth && token) headers.Authorization = `Bearer ${token}`;
-
-  let res;
-  try {
-    res = await fetch(`${API_BASE}${path}`, {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-  } catch (networkErr) {
-    throw new ApiError(
-      "Could not reach the EcoTrack server. It may not be deployed yet, or CORS isn't configured for this origin.",
-      0
-    );
-  }
-
-  let json;
-  try {
-    json = await res.json();
-  } catch {
-    throw new ApiError("Server returned an unexpected response.", res.status);
-  }
-
-  if (!res.ok || json.success === false) {
-    throw new ApiError(json.error || `Request failed (${res.status})`, res.status);
-  }
-  return json.data;
-}
-
-const api = {
-  health: () => apiRequest("/health", { auth: false }),
-  register: (payload) => apiRequest("/auth/register", { method: "POST", body: payload, auth: false }),
-  login: (payload) => apiRequest("/auth/login", { method: "POST", body: payload, auth: false }),
-  me: (token) => apiRequest("/auth/me", { token }),
-  log: (payload, token) => apiRequest("/log", { method: "POST", body: payload, token }),
-  stats: (token) => apiRequest("/stats", { token }),
-  climate: (lat, lon) => apiRequest(`/climate?lat=${lat}&lon=${lon}`, { auth: false }),
-  recommendations: (userId, token) => apiRequest(`/recommendations/${userId}`, { token }),
-  chatbotMessage: (message, userId) =>
-    apiRequest("/chatbot/message", { method: "POST", body: { message, userId }, auth: false }),
-  chatbotHistory: (userId) => apiRequest(`/chatbot/history/${userId}`, { auth: false }),
-};
-
-/* NOTE: artifacts cannot use localStorage — the JWT lives only in React state on the
-   root component for this session. Refreshing the artifact requires signing in again. */
-
-/* ---------------- local scoring fallback, mirrors server .env factors ----------------
-   Used only to render an optimistic breakdown instantly while the real request is in flight;
-   the server response (with token-authenticated, authoritative score) always overwrites it. */
-const FACTORS = {
-  transport: { car: 0.6, bus: 0.25, bike: 0, walk: 0, motorbike: 0.35 },
-  electricity: 0.7,
-  food: { meat: 0.5, mixed: 0.3, vegetarian: 0.18, vegan: 0.12 },
-};
-
-function computeScore({ transportType, distanceKm, electricityKwh, foodType }) {
-  const transport = transportType ? FACTORS.transport[transportType] * (distanceKm || 0) : 0;
-  const electricity = electricityKwh ? FACTORS.electricity * electricityKwh : 0;
-  const food = foodType ? FACTORS.food[foodType] * 10 : 0;
-  const score = +(transport + electricity + food).toFixed(1);
-  return {
-    score,
-    breakdown: {
-      transport: +transport.toFixed(1),
-      electricity: +electricity.toFixed(1),
-      food: +food.toFixed(1),
-    },
-  };
-}
-
-/* ---------------- shared bits ---------------- */
+/* ---------------- shared bits / icons (unchanged) ---------------- */
 
 function IconLeaf(props) {
   return (
@@ -384,7 +306,7 @@ function IconAlertCircle(props) {
   );
 }
 
-/* ---------------- segmented option control ---------------- */
+/* ---------------- segmented option control (unchanged) ---------------- */
 
 function OptionRow({ options, value, onChange, name }) {
   return (
@@ -409,7 +331,7 @@ function OptionRow({ options, value, onChange, name }) {
   );
 }
 
-/* ---------------- animated number ---------------- */
+/* ---------------- animated number (unchanged) ---------------- */
 
 function useAnimatedNumber(target, duration = 900) {
   const [value, setValue] = useState(0);
@@ -441,17 +363,15 @@ function useAnimatedNumber(target, duration = 900) {
   return value;
 }
 
-/* ---------------- radial gauge (signature element) ---------------- */
+/* ---------------- radial gauge — dumb component, takes plain data ---------------- */
 
 function RadialGauge({ userScore, communityAverage }) {
   const size = 200;
   const stroke = 14;
   const r = (size - stroke) / 2;
   const c = size / 2;
-  const circumference = 2 * Math.PI * r;
 
   const maxScale = Math.max(userScore, communityAverage) * 1.4 || 100;
-  const userFrac = Math.min(1, userScore / maxScale);
   const avgFrac = Math.min(1, communityAverage / maxScale);
 
   const animatedUser = useAnimatedNumber(userScore, 1100);
@@ -513,7 +433,7 @@ function RadialGauge({ userScore, communityAverage }) {
   );
 }
 
-/* ---------------- breakdown bars ---------------- */
+/* ---------------- breakdown bars — dumb component, takes plain data ---------------- */
 
 function BreakdownBars({ breakdown, animateKey }) {
   const entries = [
@@ -544,7 +464,7 @@ function BreakdownBars({ breakdown, animateKey }) {
   );
 }
 
-/* ---------------- toast / log feed entry ---------------- */
+/* ---------------- log feed entry (unchanged) ---------------- */
 
 function LogFeedItem({ entry }) {
   return (
@@ -561,7 +481,7 @@ function LogFeedItem({ entry }) {
   );
 }
 
-/* ---------------- climate strip ---------------- */
+/* ---------------- climate strip (unchanged) ---------------- */
 
 function ClimateStrip({ climate }) {
   if (!climate) return null;
@@ -590,9 +510,12 @@ function ClimateStrip({ climate }) {
   );
 }
 
-/* ---------------- auth gate ---------------- */
+/* ---------------- auth gate — now calls store actions instead of api directly ---------------- */
 
-function AuthGate({ onAuthed }) {
+function AuthGate() {
+  const login = useEcoTrackStore((s) => s.login);
+  const register = useEcoTrackStore((s) => s.register);
+
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -612,11 +535,12 @@ function AuthGate({ onAuthed }) {
     setError(null);
     setBusy(true);
     try {
-      const data =
-        mode === "login"
-          ? await api.login({ email, password })
-          : await api.register({ name, email, password, location });
-      onAuthed(data.user, data.token);
+      if (mode === "login") {
+        await login({ email, password });
+      } else {
+        await register({ name, email, password, location });
+      }
+      // session.token now set in the store — EcoTrackApp re-renders into Dashboard
     } catch (err) {
       setError(err.message);
     } finally {
@@ -711,19 +635,16 @@ function AuthGate({ onAuthed }) {
             )}
           </button>
         </form>
-
-        <div className="auth-meta mono">
-          {API_BASE}
-          {mode === "login" ? "/auth/login" : "/auth/register"}
-        </div>
       </div>
     </div>
   );
 }
 
-/* ---------------- recommendations panel ---------------- */
+/* ---------------- recommendations panel — reads token/userId from store ---------------- */
 
-function RecommendationsPanel({ token, userId }) {
+function RecommendationsPanel() {
+  const token = useEcoTrackStore((s) => s.token);
+  const userId = useEcoTrackStore((s) => s.user?.id);
   const [state, setState] = useState({ status: "idle", data: null, error: null });
 
   const load = useCallback(() => {
@@ -793,9 +714,10 @@ function RecommendationsPanel({ token, userId }) {
   );
 }
 
-/* ---------------- chatbot widget ---------------- */
+/* ---------------- chatbot widget — reads userId from store ---------------- */
 
-function ChatbotWidget({ userId }) {
+function ChatbotWidget() {
+  const userId = useEcoTrackStore((s) => s.user?.id);
   const [messages, setMessages] = useState([
     { who: "bot", text: "Hi! Ask me how to lower your footprint, or anything about transport, electricity, or food.", ts: "now" },
   ]);
@@ -866,7 +788,6 @@ function ChatbotWidget({ userId }) {
   );
 }
 
-
 const TRANSPORT_OPTIONS = [
   { value: "car", label: "car", icon: <IconCar /> },
   { value: "bus", label: "bus", icon: <IconBus /> },
@@ -880,42 +801,35 @@ const FOOD_OPTIONS = [
   { value: "vegetarian", label: "veg", icon: <IconSprout /> },
 ];
 
-let feedIdCounter = 1;
+/* ---------------- dashboard — pulls shared data from the store ---------------- */
 
-function Dashboard({ user, token, onLogout }) {
+function Dashboard() {
+  // ---- shared data layer (Lenny's store) ----
+  const user = useEcoTrackStore((s) => s.user);
+  const logout = useEcoTrackStore((s) => s.logout);
+
+  const stats = useEcoTrackStore((s) => s.stats);
+  const statsLoading = useEcoTrackStore((s) => s.statsLoading);
+  const statsError = useEcoTrackStore((s) => s.statsError);
+  const loadStats = useEcoTrackStore((s) => s.loadStats);
+
+  const lastLog = useEcoTrackStore((s) => s.lastLog);
+  const feed = useEcoTrackStore((s) => s.feed);
+  const animateKey = useEcoTrackStore((s) => s.animateKey);
+  const submitting = useEcoTrackStore((s) => s.submitting);
+  const logError = useEcoTrackStore((s) => s.logError);
+  const submitLog = useEcoTrackStore((s) => s.submitLog);
+
+  const climate = useEcoTrackStore((s) => s.climate);
+  const climateError = useEcoTrackStore((s) => s.climateError);
+  const loadClimate = useEcoTrackStore((s) => s.loadClimate);
+
+  // ---- form-local UI state (not shared, stays here) ----
   const [transportType, setTransportType] = useState("car");
   const [distanceKm, setDistanceKm] = useState(10);
   const [electricityKwh, setElectricityKwh] = useState(5);
   const [foodType, setFoodType] = useState("mixed");
-
-  const [stats, setStats] = useState(null);
-  const [statsError, setStatsError] = useState(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-
-  const [feed, setFeed] = useState([]);
-  const [lastLog, setLastLog] = useState(null);
-  const [animateKey, setAnimateKey] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
-  const [logError, setLogError] = useState(null);
   const [heroIn, setHeroIn] = useState(false);
-
-  const [climate, setClimate] = useState(null);
-  const [climateError, setClimateError] = useState(null);
-
-  const loadStats = useCallback(() => {
-    setStatsLoading(true);
-    setStatsError(null);
-    api
-      .stats(token)
-      .then((data) => {
-        setStats(data);
-        setStatsLoading(false);
-      })
-      .catch((err) => {
-        setStatsError(err.message);
-        setStatsLoading(false);
-      });
-  }, [token]);
 
   useEffect(() => {
     loadStats();
@@ -927,38 +841,12 @@ function Dashboard({ user, token, onLogout }) {
   }, []);
 
   useEffect(() => {
-    api
-      .climate(-1.286389, 36.817223)
-      .then(setClimate)
-      .catch((err) => setClimateError(err.message));
-  }, []);
+    loadClimate();
+  }, [loadClimate]);
 
-  const handleLog = useCallback(async () => {
-    setSubmitting(true);
-    setLogError(null);
-    const payload = { transportType, distanceKm, electricityKwh, foodType };
-
-    try {
-      const data = await api.log(payload, token);
-      feedIdCounter += 1;
-      const entry = {
-        id: data.id || `local_${feedIdCounter}`,
-        score: data.score,
-        createdAt: "just now",
-      };
-      setLastLog({ score: data.score, breakdown: data.breakdown });
-      setFeed((f) => [entry, ...f].slice(0, 6));
-      setAnimateKey((k) => k + 1);
-      loadStats();
-    } catch (err) {
-      setLogError(err.message);
-      const optimistic = computeScore(payload);
-      setLastLog(optimistic);
-      setAnimateKey((k) => k + 1);
-    } finally {
-      setSubmitting(false);
-    }
-  }, [transportType, distanceKm, electricityKwh, foodType, token, loadStats]);
+  const handleLog = useCallback(() => {
+    submitLog({ transportType, distanceKm, electricityKwh, foodType });
+  }, [transportType, distanceKm, electricityKwh, foodType, submitLog]);
 
   const better = stats ? stats.userScore <= stats.communityAverage : true;
 
@@ -1020,13 +908,6 @@ function Dashboard({ user, token, onLogout }) {
           display: flex; align-items: center; justify-content: center;
           font-size: 16px;
         }
-        .ec-nav-meta {
-          display: flex;
-          gap: 22px;
-          font-size: 13px;
-          color: var(--ec-sage);
-        }
-        .ec-nav-meta b { color: var(--ec-hi); font-weight: 500; }
 
         .ec-hero {
           padding: 40px 32px 8px;
@@ -1513,10 +1394,6 @@ function Dashboard({ user, token, onLogout }) {
           background: rgba(232,137,107,0.1);
           border-radius: 10px; padding: 10px 12px; margin-bottom: 4px;
         }
-        .auth-meta {
-          margin-top: 18px; font-size: 10.5px; color: #5F6B63;
-          text-align: center; word-break: break-all;
-        }
       `}</style>
 
       <div className="ec-grain" />
@@ -1532,7 +1409,7 @@ function Dashboard({ user, token, onLogout }) {
             <div className="ec-user-name">{user?.name || "Member"}</div>
             <div className="ec-user-loc"><IconMapPin />{user?.location || "—"}</div>
           </div>
-          <button className="logout-btn" onClick={onLogout} aria-label="log out">
+          <button className="logout-btn" onClick={logout} aria-label="log out">
             <IconLogout />
           </button>
         </div>
@@ -1687,8 +1564,8 @@ function Dashboard({ user, token, onLogout }) {
       </div>
 
       <div className="ec-grid" style={{ paddingTop: 0 }}>
-        <RecommendationsPanel token={token} userId={user?.id} />
-        <ChatbotWidget userId={user?.id} />
+        <RecommendationsPanel />
+        <ChatbotWidget />
       </div>
 
       {climateError && !climate && (
@@ -1701,23 +1578,15 @@ function Dashboard({ user, token, onLogout }) {
   );
 }
 
+/* ---------------- root — just decides which screen, no data ownership ---------------- */
+
 export default function EcoTrackApp() {
   useFonts();
-  const [session, setSession] = useState({ user: null, token: null });
+  const token = useEcoTrackStore((s) => s.token);
 
-  if (!session.token) {
-    return (
-      <AuthGate
-        onAuthed={(user, token) => setSession({ user, token })}
-      />
-    );
+  if (!token) {
+    return <AuthGate />;
   }
 
-  return (
-    <Dashboard
-      user={session.user}
-      token={session.token}
-      onLogout={() => setSession({ user: null, token: null })}
-    />
-  );
+  return <Dashboard />;
 }
