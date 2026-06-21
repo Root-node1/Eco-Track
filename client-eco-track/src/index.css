@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+:root {
+  --ec-bg: #0B0F0C;
+  --ec-earth: #D9CBA3;
+  --ec-green: #3F6B4F;
+  --ec-sage: #8FA68E;
+  --ec-accent: #E8732C;
+  --ec-card: #F5F2EA;
+}
