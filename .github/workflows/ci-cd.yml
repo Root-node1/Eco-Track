@@ -1,11 +1,9 @@
 name: CI/CD Pipeline
-
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-
 jobs:
   test-frontend:
     runs-on: ubuntu-latest
@@ -16,11 +14,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-<<<<<<< HEAD
         node-version: '20'
-=======
-        node-version: '18'
->>>>>>> ft/node
     
     - name: Install dependencies
       working-directory: ./client-eco-track
@@ -33,7 +27,6 @@ jobs:
     - name: Build frontend
       working-directory: ./client-eco-track
       run: npm run build
-
   test-backend:
     runs-on: ubuntu-latest
     
@@ -47,7 +40,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
     - uses: actions/checkout@v3
     
@@ -67,7 +59,6 @@ jobs:
       run: python manage.py migrate --noinput
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/eco_track
-
   build-docker:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
