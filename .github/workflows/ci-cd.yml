@@ -16,7 +16,11 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
+<<<<<<< HEAD
         node-version: '20'
+=======
+        node-version: '18'
+>>>>>>> ft/node
     
     - name: Install dependencies
       working-directory: ./client-eco-track
