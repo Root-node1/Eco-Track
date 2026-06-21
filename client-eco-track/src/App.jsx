@@ -1,4 +1,4 @@
-import EcoTrackApp from './EcoTrackApp';
+import EcoTrackApp from './EcoTrackApp'
 
 function App() {
   return (
