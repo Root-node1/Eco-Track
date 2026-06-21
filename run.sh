@@ -15,7 +15,7 @@ echo -e "${BLUE}Starting Eco-Track development servers...${NC}"
 # Start Django server in the background
 echo -e "${GREEN}Starting Django server...${NC}"
 cd server-eco-track
-python manage.py runserver &
+venv/bin/python manage.py runserver &
 DJANGO_PID=$!
 
 # Start React development server in the background

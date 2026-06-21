@@ -1,89 +1,178 @@
-#  EcoTrack Documentation (Practice Project)
+# 🌱 EcoTrack Node.js API Documentation
 
-##  Overview
+## 📌 Overview
 
-EcoTrack is a **community carbon footprint tracker** that allows users to log daily activities (transport, electricity, food) and compare their carbon impact against a community average.
+EcoTrack is a carbon footprint tracking platform where users log daily activities (transport, electricity, food) and receive:
 
->  This project is for **A weekly PRACTICE session** — not the final hackathon build.
+* Carbon footprint scores
+* Community comparisons
+* Personalized recommendations
+* Chatbot assistance
 
 ---
 
-#  Architecture
+## 🌍 Base URL
 
-```id="arch1"
-                  ┌──────────────────────┐
-                  │     Frontend         │
-                  │ React + Vite         │
-                  │ (Del + Lenny)        │
-                  └─────────┬────────────┘
-                            │
-         ┌──────────────────┴──────────────────┐
-         │                                     │
-         ▼                                     ▼
-┌──────────────────────┐             ┌──────────────────────┐
-│ Backend A            │             │ Backend B            │
-│ Django + PostgreSQL  │             │ Node + MongoDB       │
-│ (Isaac)              │             │ (Winstone)           │
-└──────────────────────┘             └──────────────────────┘
-         │                                     │
-         └──────────────┬──────────────────────┘
-                        ▼
-              IDENTICAL JSON RESPONSES
+| Environment | URL                                      |
+| ----------- | ---------------------------------------- |
+| Development | `http://localhost:5000/api`              |
+| Production  | `https://ecotrack-node.onrender.com/api` |
+
+---
+
+## 🔐 Authentication
+
+Most endpoints require a JWT token.
+
+Include in headers:
+
+```http
+Authorization: Bearer {token}
 ```
 
 ---
 
-# Critical Rule
+# 🚀 Quick Start
 
-Both backends **MUST return IDENTICAL JSON shapes** for all endpoints.
+1. **Register**
+2. **Login**
+3. **Copy Token**
+4. **Use Token in Protected Routes**
 
-This ensures:
+```bash
+# Register
+curl -X POST http://localhost:5000/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{"name":"John Doe","email":"john@example.com","password":"123456"}'
 
-* Frontend can switch between APIs seamlessly
-* Integration testing remains consistent
-* No breaking changes between implementations
-
----
-
-#  Base URLs
-
-| Backend    | URL                                      |
-| ---------- | ---------------------------------------- |
-| Django API | https://ecotrack-django.onrender.com/api |
-| Node API   | https://ecotrack-node.onrender.com/api   |
-| Frontend   | http://localhost:5173                    |
-
----
-
-#  Data Flow
-
-* User logs activity via frontend
-* Frontend calls **either backend (A or B)**
-* Backend:
-
-  * Calculates carbon footprint
-  * Stores activity
-  * Returns standardized response
-* Frontend:
-
-  * Displays user score
-  * Compares with community average
+# Login
+curl -X POST http://localhost:5000/api/auth/login \
+-H "Content-Type: application/json" \
+-d '{"email":"john@example.com","password":"123456"}'
+```
 
 ---
 
-#  API Endpoints (IDENTICAL for BOTH Backends)
+# 📡 API Endpoints
 
 ---
 
-## 1. POST /api/log
+## 🩺 1. Health Check
 
-### Purpose
+### GET `/health`
 
-Log a daily activity and calculate carbon footprint
+* Auth: ❌ None
 
-### Request
+### ✅ Response
 
-```json id="req1"
+```json
+{
+  "status": "ok",
+  "message": "EcoTrack server running",
+  "timestamp": "2026-06-18T18:30:00.000Z"
+}
+```
+
+---
+
+## 🔑 2. Authentication Routes
+
+### POST `/auth/register`
+
+* Auth: ❌ None
+
+#### 📥 Body
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "123456",
+  "location": "Nairobi"
+}
+```
+
+#### 📤 Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "u123",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "location": "Nairobi",
+      "role": "user"
+    },
+    "token": "jwt_token_here"
+  }
+}
+```
+
+---
+
+### POST `/auth/login`
+
+#### 📥 Body
+
+```json
+{
+  "email": "john@example.com",
+  "password": "123456"
+}
+```
+
+#### 📤 Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "u123",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "location": "Nairobi",
+      "role": "user"
+    },
+    "token": "jwt_token_here"
+  }
+}
+```
+
+---
+
+### GET `/auth/me`
+
+* Auth: ✅ Required
+
+#### 📤 Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "u123",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "location": "Nairobi",
+    "role": "user"
+  }
+}
+```
+
+---
+
+## 🚗 3. Activity Routes
+
+### POST `/log`
+
+* Auth: ✅ Required
+
+#### 📥 Body
+
+```json
 {
   "transportType": "car",
   "distanceKm": 10,
@@ -92,73 +181,67 @@ Log a daily activity and calculate carbon footprint
 }
 ```
 
-> At least **one field is required**
+#### 📤 Response
 
----
-
-### Response
-
-```json id="res1"
+```json
 {
   "success": true,
   "data": {
-    "id": "act_123",
+    "id": "log123",
     "score": 12.5,
     "breakdown": {
-      "transport": 6.0,
-      "electricity": 3.5,
-      "food": 3.0
+      "transport": 8.0,
+      "electricity": 2.5,
+      "food": 2.0
     },
-    "createdAt": "2026-06-16T10:00:00Z"
+    "createdAt": "2026-06-18T18:30:00.000Z"
   }
 }
 ```
 
 ---
 
-## 2. GET /api/stats
+### GET `/stats`
 
-### Purpose
+* Auth: ✅ Required
 
-Get carbon footprint statistics vs community average
+#### 📤 Response
 
-### Response
-
-```json id="res2"
+```json
 {
   "success": true,
   "data": {
-    "userScore": 75,
-    "communityAverage": 68,
+    "userScore": 10.2,
+    "communityAverage": 14.5,
     "breakdown": {
-      "transport": 40,
-      "electricity": 20,
-      "food": 15
+      "transport": 5.0,
+      "electricity": 3.0,
+      "food": 2.2
     },
     "totalActivities": 25,
-    "period": "7d"
+    "period": "weekly"
   }
 }
 ```
 
 ---
 
-## 3. GET /api/climate
+## 🌦️ 4. Climate Route
 
-### Purpose
+### GET `/climate`
 
-Fetch weather data + carbon context
+* Auth: ❌ None
 
-### Query Params
+#### 🔍 Query Params
 
-* lat (default: -1.286389)
-* lon (default: 36.817223)
+| Param | Default   |
+| ----- | --------- |
+| lat   | -1.286389 |
+| lon   | 36.817223 |
 
----
+#### 📤 Response
 
-### Response
-
-```json id="res3"
+```json
 {
   "success": true,
   "data": {
@@ -171,12 +254,12 @@ Fetch weather data + carbon context
     "weather": {
       "temperature": 24,
       "condition": "Cloudy",
-      "humidity": 60,
+      "humidity": 65,
       "windSpeed": 10,
-      "timestamp": "2026-06-16T10:00:00Z"
+      "timestamp": "2026-06-18T18:30:00.000Z"
     },
     "carbonContext": {
-      "message": "Cool weather reduces energy usage",
+      "message": "Cool weather reduces electricity usage.",
       "seasonalFactor": 0.9
     }
   }
@@ -185,81 +268,313 @@ Fetch weather data + carbon context
 
 ---
 
+## 4. POST /api/auth/register
+
+### Purpose
+
+Create a new user account and receive JWT tokens
+
+### Request
+
+```json id="req4"
+{
+  "username": "johndoe",
+  "email": "john@example.com",
+  "password": "securepass123"
+}
+```
+
+> `email` is optional; `password` must be at least 8 characters
+
+### Response (201)
+
+```json id="res4"
+{
+  "access": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "email": "john@example.com"
+  }
+}
+```
+
+---
+
+## 5. POST /api/auth/login
+
+### Purpose
+
+Authenticate and receive JWT tokens
+
+### Request
+
+```json id="req5"
+{
+  "username": "johndoe",
+  "password": "securepass123"
+}
+```
+
+### Response (200)
+
+```json id="res5"
+{
+  "access": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "email": "john@example.com"
+  }
+}
+```
+
+### Error (401)
+
+```json id="err5"
+{
+  "detail": "Invalid credentials"
+}
+```
+
+---
+
+## 6. POST /api/auth/refresh
+
+### Purpose
+
+Obtain a new access token using a valid refresh token
+
+### Request
+
+```json id="req6"
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+### Response (200)
+
+```json id="res6"
+{
+  "access": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+---
+
+## 7. POST /api/auth/logout
+
+### Purpose
+
+Blacklist a refresh token to prevent further use
+
+### Request
+
+```json id="req7"
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+### Response (200)
+
+```json id="res7"
+{
+  "detail": "Logged out successfully"
+}
+```
+
+> Requires authentication via `Authorization: Bearer <access_token>` header
+
+---
+
+## 8. /api/profile
+
+### Purpose
+
+Retrieve, update, or delete the authenticated user's profile
+
+### Auth
+
+All methods require `Authorization: Bearer <access_token>` header.
+
+---
+
+### 8a. GET /api/profile
+
+#### Response (200)
+
+```json id="res8a"
+{
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "email": "john@example.com"
+  },
+  "avatar": null,
+  "bio": "",
+  "location": "",
+  "created_at": "2026-06-18T10:00:00Z",
+  "updated_at": "2026-06-18T10:00:00Z"
+}
+```
+
+---
+
+### 8b. PUT /api/profile
+
+Full update of profile fields.
+
+#### Request
+
+```json id="req8b"
+{
+  "bio": "Eco-warrior from Nairobi",
+  "location": "Nairobi"
+}
+```
+
+#### Response (200)
+
+Same shape as GET /api/profile.
+
+---
+
+### 8c. PATCH /api/profile
+
+Partial update — only send the fields to change.
+
+#### Request
+
+```json id="req8c"
+{
+  "location": "Mombasa"
+}
+```
+
+#### Response (200)
+
+Same shape as GET /api/profile.
+
+---
+
+### 8d. DELETE /api/profile
+
+Permanently delete the user account and all associated data.
+
+#### Response (204)
+
+*No body*
+
+---
+
 #  Monorepo Structure
 
-```id="mono1"
-ecotrack/
-├── client/
-├── server-django/
-├── server-node/
-└── tests/
+### POST `/chatbot/message`
+
+* Auth: ❌ None
+
+#### 📥 Body
+
+```json
+{
+  "message": "How can I reduce carbon?",
+  "userId": "u123"
+}
+```
+
+#### 📤 Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "userMessage": "How can I reduce carbon?",
+    "botResponse": "Try using public transport and reducing meat consumption.",
+    "timestamp": "2026-06-18T18:30:00.000Z"
+  }
+}
+```
+
+#### 💡 Supported Keywords
+
+`carbon, transport, electricity, food, hello, hi, help, tip, thanks, bye`
+
+---
+
+### GET `/chatbot/history/:userId`
+
+#### 📤 Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "userId": "u123",
+      "userMessage": "Hello",
+      "botResponse": "Hi! How can I help?",
+      "timestamp": "2026-06-18T18:00:00.000Z"
+    }
+  ]
+}
 ```
 
 ---
 
-# 🔧 Environment Variables
+## 💡 6. Recommendations Route
 
-## Frontend (.env)
+### GET `/recommendations/:userId`
 
-```env id="env1"
-VITE_API_URL=https://ecotrack-node.onrender.com/api
+* Auth: ✅ Required
+
+#### 📤 Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "recommendations": [
+      "Use public transport more often",
+      "Reduce electricity usage at night",
+      "Switch to a plant-based diet twice a week"
+    ],
+    "summary": {
+      "avgTransport": 6.5,
+      "avgElectricity": 3.2,
+      "avgFood": 2.1
+    }
+  }
+}
 ```
 
 ---
 
-## Django Backend (.env)
+# ❌ Error Responses
 
-```env id="env2"
-DATABASE_URL=postgresql://user:password@localhost:5432/ecotrack
-SECRET_KEY=your_secret_key
-DEBUG=True
-ALLOWED_HOSTS=*
-CORS_ALLOWED_ORIGINS=http://localhost:5173,https://ecotrack.vercel.app
+| Status | Response                                                   |
+| ------ | ---------------------------------------------------------- |
+| 400    | `{ "success": false, "error": "Message" }`                 |
+| 401    | `{ "success": false, "error": "Authentication required" }` |
+| 404    | `{ "success": false, "error": "Route not found" }`         |
+| 500    | `{ "success": false, "error": "Internal server error" }`   |
+
+---
+
+# 🧪 Testing with cURL
+
+```bash
+# Get stats
+curl -X GET http://localhost:5000/api/stats \
+-H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ---
 
-## Node Backend (.env)
-
-```env id="env3"
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/ecotrack
-CORS_ORIGIN=http://localhost:5173,https://ecotrack.vercel.app
-CARBON_FACTOR_TRANSPORT=0.6
-CARBON_FACTOR_ELECTRICITY=0.7
-CARBON_FACTOR_FOOD=0.5
-```
-
----
-
-#  CORS Configuration
-
-## Node (Express)
-
-```js id="cors1"
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://ecotrack.vercel.app"
-  ],
-  credentials: true
-}));
-```
-
----
-
-## Django
-
-```python id="cors2"
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "https://ecotrack.vercel.app"
-]
-```
-
----
-
-#  Postman Collection
+# 📬 Postman Setup
 
 ```json id="postman1"
 {
@@ -292,6 +607,75 @@ CORS_ALLOWED_ORIGINS = [
         "method": "GET",
         "url": "{{baseUrl}}/climate?lat=-1.286389&lon=36.817223"
       }
+    },
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"johndoe\", \"email\": \"john@example.com\", \"password\": \"securepass123\" }"
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\": \"johndoe\", \"password\": \"securepass123\" }"
+        }
+      }
+    },
+    {
+      "name": "Refresh Token",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/refresh",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"refresh\": \"...\" }"
+        }
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/logout",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"refresh\": \"...\" }"
+        }
+      }
+    },
+    {
+      "name": "Get Profile",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/profile"
+      }
+    },
+    {
+      "name": "Update Profile",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/profile",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"bio\": \"Eco-warrior\", \"location\": \"Nairobi\" }"
+        }
+      }
+    },
+    {
+      "name": "Delete Profile",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/profile"
+      }
     }
   ]
 }
@@ -299,56 +683,60 @@ CORS_ALLOWED_ORIGINS = [
 
 ---
 
-#  Testing Strategy
+# ⚛️ Frontend Integration (React / Vite)
 
-* Backend A vs Backend B responses must match exactly
-* Use:
+```javascript
+const API_URL = import.meta.env.VITE_API_URL;
 
-  * Jest (Node)
-  * Pytest (Django)
-* Integration tests stored in `/tests`
+export const getStats = async (token) => {
+  const res = await fetch(`${API_URL}/stats`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
 
----
-
-#  Git Workflow
-
-* `main` → production-ready
-* Feature branches per developer
-* PRs required for all merges
-* Only Winstone merges PRs
-* No self-merging
+  return res.json();
+};
+```
 
 ---
 
-#  Changelog
+# 🌱 Environment Variables
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+---
+
+# 🔄 API Flow
 
 | Version | Date       | Changes                |
 | ------- | ---------- | ---------------------- |
 | v0.1.0  | 2026-06-16 | Initial practice setup |
-| v0.2.0  | TBD        | Add auth               |
+| v0.2.0  | 2026-06-18 | Add auth + user profile |
 | v0.3.0  | TBD        | Add leaderboard        |
 
 ---
 
-#  Sign-off
+# 📝 Changelog
 
-| Name     | Role               | Signature | Date   |
-| -------- | ------------------ | --------- | ------ |
-| Del      | Team Lead + UI     | ______    | ______ |
-| Lenny    | State + Charts     | ______    | ______ |
-| Isaac    | Django Backend     | ______    | ______ |
-| Winstone | Node + Integration | ______    | ______ |
-| Kigen    | DevOps + ML        | ______    | ______ |
+## v1.0.0
 
----
-
-#  Final Notes
-
-* Both backends are **equal implementations**
-* Frontend should work with either backend without changes
-* Consistency > optimization for this practice
-* Focus: **team coordination, API contracts, integration**
+* Initial release
+* Authentication system
+* Activity logging
+* Stats & recommendations
+* Climate endpoint
+* Chatbot integration
 
 ---
 
-**End of Doc**
+## 👨‍💻 Maintainers
+
+Backend: Winstone
+Frontend: Del & Lenny
+
+---
+
+**EcoTrack API — Build sustainable habits 🌍**
